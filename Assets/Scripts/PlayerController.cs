@@ -12,9 +12,12 @@ public class PlayerController : MonoBehaviour
     public float speedMovement;
     private float moveInput;
 
+    //relacionado ao espelhamento do sprite na mudanca de direcao
+    private bool isFacingRight = true;
+
     //relacionado a pulo
     private bool isGrounded; //verifica se o player esta no chao
-    public Transform feetpos;
+    public Transform feetpos; //objeto que verifica onde esta o pe do personagem
     public float checkRadius;
     public LayerMask whatIsGround; //define o que e chao
     public float jumpForce;
@@ -22,60 +25,194 @@ public class PlayerController : MonoBehaviour
     public float jumpTime;
     private bool isJumping;
     private bool startJump;
+    private bool canJump;
+    public int amountOfJumps = 1;
+    private int amountOfJumpsLeft;
+    public float movementForceInAir;
+    [Range(0, .5f)] [SerializeField] private float m_MovementSmoothinginAir = .05f;
+    public float resistAir = 0.95f;
+    public float variableJumHeightMultiplier = 0.5f;
+
+    //Animacoes
+    private Animator animator;
+    private bool isWalking;
     
+    //Deslizar na parede
+    private bool isTouchingWall; //verifica se esta tocando a parede
+    public float wallCheckDistance;
+    public Transform wallCheck;
+    private bool isWallSliding;
+    private float wallSlidingSpeed;
+    public float totalWallSlidingSpeed;
+    public float increaseWallSliperry;
+
+    //wall jump
+    public Vector2 wallHopDirection;
+    public Vector2 wallJumpDirection;
+
+    public float wallHopForce;
+    public float wallJumpForce;
+    private int facingDirection = 1; //-1 left | 1 right
+
+
 
     // Start is called before the first frame update
     void Start()
     {
         controller = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        amountOfJumpsLeft = amountOfJumps;
+        wallSlidingSpeed = totalWallSlidingSpeed;
+        wallHopDirection.Normalize();
+        wallJumpDirection.Normalize();
+
     }
 
     // Update is called once per frame
     void Update()
     {
+        checkInput();
+        checkMovementDirection();
+        updateAnimations();
+        checkSurroundings();
+        checkIfCanJump();
+        checkIfwallIsSliding();
+    }
+
+    private void checkSurroundings(){
         isGrounded = Physics2D.OverlapCircle(feetpos.position, checkRadius, whatIsGround);
-
-        //Se soltar a tecla o personagem comeca a cair
-        if(Input.GetKeyUp(KeyCode.Space))
-        {
-            isJumping = false;    
-        }
-          //faz o personagem pular
-        if(isGrounded && Input.GetKeyDown(KeyCode.Space))
-        {
-            isJumping = true;
-            jumpTimeCounter = jumpTime;
-            controller.velocity = Vector2.up * jumpForce;
-        }
-
-        
-
+        isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right,wallCheckDistance,whatIsGround);
     }
 
 
     void FixedUpdate() {
+        applyMovement();
+    }
+
+    private void updateAnimations(){
+        animator.SetBool("isWalking",isWalking);
+        animator.SetBool("isJumping",isJumping);
+        animator.SetBool("isWallSliding",isWallSliding);
+    }
+
+    private void checkInput(){
         // atribiu o lado que o jogador deseja andar de acordo com a tecla apertada -1|0|1
         moveInput = Input.GetAxisRaw("Horizontal");
-        // Move the character by finding the target velocity
-        Vector3 targetVelocity = new Vector2(moveInput * speedMovement, controller.velocity.y);
-        // And then smoothing it out and applying it to the character
-        controller.velocity = Vector3.SmoothDamp(controller.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
-    
-        
-      
 
-        //faz o personagem pular mais alto se segurar o pulo
-        if(Input.GetKey(KeyCode.Space) && isJumping)
+        // verifica se o personagem esta no chao e pode pular
+        if(Input.GetKeyDown(KeyCode.Space))
         {
-            if(jumpTimeCounter>0)
-            {
-                controller.velocity = Vector2.up * jumpForce;
-                jumpTimeCounter-=Time.deltaTime;
-            }else{
-                isJumping = false;
-            }
-            
+            jump();
+        }
+        //Se soltar a tecla o personagem comeca a cair
+        if(Input.GetKeyUp(KeyCode.Space))
+        {
+            controller.velocity = new Vector2(controller.velocity.x, controller.velocity.y * variableJumHeightMultiplier);
+            isJumping = false;    
         }
 
     }
+
+    //faz o personagem pular
+    private void checkIfCanJump(){
+        if((isGrounded && controller.velocity.y <=0) || isWallSliding){
+            amountOfJumpsLeft = amountOfJumps;
+        }
+        if(amountOfJumpsLeft<=0){
+            canJump = false;
+        }else{
+            canJump = true;
+        }
+    }
+
+    private void checkIfwallIsSliding(){
+        if(isTouchingWall && !isGrounded && controller.velocity.y<0){
+            isWallSliding = true;
+        }else{
+            isWallSliding = false;
+            wallSlidingSpeed = totalWallSlidingSpeed;
+        }
+
+    }
+
+    private void applyMovement(){
+        if(isGrounded){
+            // Move the character by finding the target velocity
+            Vector3 targetVelocity = new Vector2(moveInput * speedMovement, controller.velocity.y);
+            // And then smoothing it out and applying it to the character
+            controller.velocity = Vector3.SmoothDamp(controller.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
+            isWalking = true;
+        } else if(!isGrounded && !isWallSliding && moveInput != 0){
+            Vector2 forceToAdd = new Vector2(movementForceInAir * moveInput, 0);
+            controller.AddForce(forceToAdd);
+            
+            if(Mathf.Abs(controller.velocity.x)>speedMovement){
+                // Move the character by finding the target velocity
+                Vector3 targetVelocity = new Vector2(moveInput * speedMovement, controller.velocity.y);
+                // And then smoothing it out and applying it to the character
+                controller.velocity  = Vector3.SmoothDamp(controller.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothinginAir);
+            }
+
+            isWalking = true;
+
+        } else if(!isGrounded && !isWallSliding && moveInput==0){
+            controller.velocity = new Vector2(controller.velocity.x*resistAir,controller.velocity.y);
+            isWalking = true;
+        }
+        
+
+        if(isWallSliding){
+            if(controller.velocity.y < -wallSlidingSpeed){
+                controller.velocity = new Vector2(controller.velocity.x,-wallSlidingSpeed);
+            }
+            wallSlidingSpeed = wallSlidingSpeed+increaseWallSliperry; // atualiza a velocidade que o personagem cai
+
+        }
+        
+    }
+
+    private void checkMovementDirection(){
+        if(isFacingRight && moveInput < 0){
+            flip();
+        }else if(!isFacingRight && moveInput>0){
+            flip();
+        }
+
+        if(controller.velocity.x ==0){
+            isWalking = false;
+        }
+    }
+
+    private void flip(){
+        if(!isWallSliding){
+            facingDirection *= -1;
+            isFacingRight = !isFacingRight;
+            transform.Rotate(0.0f,180.0f,0.0f);
+        }
+        
+    }
+
+    private void jump()
+    {
+        if(canJump && !isWallSliding){
+            isJumping = true;
+            jumpTimeCounter = jumpTime;
+            controller.velocity = new Vector2(controller.velocity.x,jumpForce);
+            amountOfJumpsLeft--;
+        }else if(isWallSliding && moveInput == 0 && canJump){ //wall Hop
+            isWallSliding = false;
+            amountOfJumpsLeft--;
+            Vector2 forceToAdd = new Vector2(wallHopForce*wallHopDirection.x*-facingDirection,wallHopForce*wallHopDirection.y);
+            controller.AddForce(forceToAdd, ForceMode2D.Impulse);
+        }else if((isWallSliding || isTouchingWall) && moveInput != 0 && canJump){
+            isWallSliding = false;
+            amountOfJumpsLeft--;
+            Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*moveInput,wallJumpForce*wallJumpDirection.y);
+            controller.AddForce(forceToAdd, ForceMode2D.Impulse);
+        }
+
+    }
+
+
+
 }
