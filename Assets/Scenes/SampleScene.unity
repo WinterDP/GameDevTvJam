@@ -489,7 +489,7 @@ MonoBehaviour:
   wallCheckDistance: 0
   wallCheck: {fileID: 108138037}
   totalWallSlidingSpeed: 2
-  increaseWallSliperry: 0
+  increaseWallSliperry: 2
   wallHopDirection: {x: 1, y: 0.5}
   wallJumpDirection: {x: 1, y: 2}
   wallHopForce: 10

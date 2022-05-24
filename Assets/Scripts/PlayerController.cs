@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     //relacionado a movimento
     [Range(0, .5f)] [SerializeField] private float m_MovementSmoothing = .05f; // How much to smooth out the movement
     private Vector3 m_Velocity = Vector3.zero;
-    public float speedMovement;
+    [SerializeField] private float speedMovement;
     private float moveInput;
 
     //relacionado ao espelhamento do sprite na mudanca de direcao
@@ -17,21 +17,21 @@ public class PlayerController : MonoBehaviour
 
     //relacionado a pulo
     private bool isGrounded; //verifica se o player esta no chao
-    public Transform feetpos; //objeto que verifica onde esta o pe do personagem
-    public float checkRadius;
-    public LayerMask whatIsGround; //define o que e chao
-    public float jumpForce;
+    [SerializeField] private Transform feetpos; //objeto que verifica onde esta o pe do personagem
+    [SerializeField] private float checkRadius;
+    [SerializeField] private LayerMask whatIsGround; //define o que e chao
+    [SerializeField] private float jumpForce;
     private float jumpTimeCounter;
-    public float jumpTime;
+    [SerializeField] private float jumpTime;
     private bool isJumping;
     private bool startJump;
     private bool canJump;
-    public int amountOfJumps = 1;
+    [SerializeField] private int amountOfJumps = 1;
     private int amountOfJumpsLeft;
-    public float movementForceInAir;
+    [SerializeField] private float movementForceInAir;
     [Range(0, .5f)] [SerializeField] private float m_MovementSmoothinginAir = .05f;
-    public float resistAir = 0.95f;
-    public float variableJumHeightMultiplier = 0.5f;
+    [SerializeField] private float resistAir = 0.95f;
+    [SerializeField] private float variableJumHeightMultiplier = 0.5f;
 
     //Animacoes
     private Animator animator;
@@ -39,19 +39,19 @@ public class PlayerController : MonoBehaviour
     
     //Deslizar na parede
     private bool isTouchingWall; //verifica se esta tocando a parede
-    public float wallCheckDistance;
-    public Transform wallCheck;
+    [SerializeField] private float wallCheckDistance;
+    [SerializeField] private Transform wallCheck;
     private bool isWallSliding;
     private float wallSlidingSpeed;
-    public float totalWallSlidingSpeed;
-    public float increaseWallSliperry;
+    [SerializeField] private float totalWallSlidingSpeed;
+    [SerializeField] private float increaseWallSliperry;
 
     //wall jump
-    public Vector2 wallHopDirection;
-    public Vector2 wallJumpDirection;
+    [SerializeField] private Vector2 wallHopDirection;
+    [SerializeField] private Vector2 wallJumpDirection;
 
-    public float wallHopForce;
-    public float wallJumpForce;
+    [SerializeField] private float wallHopForce;
+    [SerializeField] private float wallJumpForce;
     private int facingDirection = 1; //-1 left | 1 right
 
 
@@ -118,7 +118,7 @@ public class PlayerController : MonoBehaviour
         if((isGrounded && controller.velocity.y <=0) || isWallSliding){
             amountOfJumpsLeft = amountOfJumps;
         }
-        if(amountOfJumpsLeft<=0){
+        if(amountOfJumpsLeft<=0 || (amountOfJumpsLeft == amountOfJumps && !isGrounded && !isWallSliding)){
             canJump = false;
         }else{
             canJump = true;
@@ -200,11 +200,13 @@ public class PlayerController : MonoBehaviour
             controller.velocity = new Vector2(controller.velocity.x,jumpForce);
             amountOfJumpsLeft--;
         }else if(isWallSliding && moveInput == 0 && canJump){ //wall Hop
+            isJumping = true;
             isWallSliding = false;
             amountOfJumpsLeft--;
             Vector2 forceToAdd = new Vector2(wallHopForce*wallHopDirection.x*-facingDirection,wallHopForce*wallHopDirection.y);
             controller.AddForce(forceToAdd, ForceMode2D.Impulse);
-        }else if((isWallSliding || isTouchingWall) && moveInput != 0 && canJump){
+        }else if((isWallSliding || isTouchingWall) && (moveInput != facingDirection) && canJump){
+            isJumping = true;
             isWallSliding = false;
             amountOfJumpsLeft--;
             Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*moveInput,wallJumpForce*wallJumpDirection.y);
