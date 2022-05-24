@@ -178,7 +178,7 @@ public class PlayerController : MonoBehaviour
             flip();
         }
 
-        if(controller.velocity.x ==0){
+        if(moveInput ==0 || !isGrounded){
             isWalking = false;
         }
     }
