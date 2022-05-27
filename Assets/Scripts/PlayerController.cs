@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController instance;
+
     private Rigidbody2D controller;
 
     //relacionado a movimento
@@ -17,7 +19,7 @@ public class PlayerController : MonoBehaviour
 
     //relacionado a pulo
     private bool isGrounded; //verifica se o player esta no chao
-    [SerializeField] private Transform feetpos; //objeto que verifica onde esta o pe do personagem
+    [SerializeField] private Transform groundCheck; //objeto que verifica onde esta o pe do personagem
     [SerializeField] private float checkRadius;
     [SerializeField] private LayerMask whatIsGround; //define o que e chao
     [SerializeField] private float jumpForce;
@@ -54,11 +56,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float wallJumpForce;
     private int facingDirection = 1; //-1 left | 1 right
 
+    //morte
+    private bool isDead;
+    [SerializeField] private float lethalVelocity;
+    private bool isTouchingEnemy;
+
 
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        instance = this;
         controller = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         amountOfJumpsLeft = amountOfJumps;
@@ -77,10 +85,11 @@ public class PlayerController : MonoBehaviour
         checkSurroundings();
         checkIfCanJump();
         checkIfwallIsSliding();
+        checkIfIsDead();
     }
 
     private void checkSurroundings(){
-        isGrounded = Physics2D.OverlapCircle(feetpos.position, checkRadius, whatIsGround);
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
         isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right,wallCheckDistance,whatIsGround);
     }
 
@@ -89,10 +98,11 @@ public class PlayerController : MonoBehaviour
         applyMovement();
     }
 
-    private void updateAnimations(){
+    public void updateAnimations(){
         animator.SetBool("isWalking",isWalking);
         animator.SetBool("isJumping",isJumping);
         animator.SetBool("isWallSliding",isWallSliding);
+        //animator.SetBool("isDead",isDead);
     }
 
     private void checkInput(){
@@ -183,7 +193,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void flip(){
+    public void flip(){
         if(!isWallSliding){
             facingDirection *= -1;
             isFacingRight = !isFacingRight;
@@ -192,7 +202,7 @@ public class PlayerController : MonoBehaviour
         
     }
 
-    private void jump()
+    public void jump()
     {
         if(canJump && !isWallSliding){
             isJumping = true;
@@ -215,6 +225,29 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    public void checkIfIsDead(){
+        if(isGrounded && (controller.velocity.y < -lethalVelocity)){
+            killPlayer();
+        }else if(isTouchingEnemy){
+            killPlayer();
+        }else{
+            isDead=false;
+        }
+    }
 
+    public void killPlayer(){
+        isDead = true;
+        Destroy(gameObject);
+        LevelManager.instance.Respawn();
+    }
+
+    
+    private void OnCollisionEnter2D(Collision2D collision) {
+        if(collision.gameObject.CompareTag("Enemy")){
+            isTouchingEnemy = true;
+        }else{
+            isTouchingEnemy = false;
+        }
+    }
 
 }
