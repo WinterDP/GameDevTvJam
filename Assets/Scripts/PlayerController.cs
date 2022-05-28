@@ -1,66 +1,83 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController instance;
-
     private Rigidbody2D controller;
+    private BoxCollider2D playerBoxCollider;
+    private CircleCollider2D playerCircleCollider;
 
-    //relacionado a movimento
+    //movement
     [Range(0, .5f)] [SerializeField] private float m_MovementSmoothing = .05f; // How much to smooth out the movement
-    private Vector3 m_Velocity = Vector3.zero;
     [SerializeField] private float speedMovement;
+
+    private Vector3 m_Velocity = Vector3.zero;
     private float moveInput;
 
-    //relacionado ao espelhamento do sprite na mudanca de direcao
+    //MirroringPlayer
     private bool isFacingRight = true;
 
-    //relacionado a pulo
-    private bool isGrounded; //verifica se o player esta no chao
+    //jumping
+    
     [SerializeField] private Transform groundCheck; //objeto que verifica onde esta o pe do personagem
     [SerializeField] private float checkRadius;
     [SerializeField] private LayerMask whatIsGround; //define o que e chao
     [SerializeField] private float jumpForce;
-    private float jumpTimeCounter;
-    [SerializeField] private float jumpTime;
-    private bool isJumping;
-    private bool startJump;
-    private bool canJump;
-    [SerializeField] private int amountOfJumps = 1;
-    private int amountOfJumpsLeft;
     [SerializeField] private float movementForceInAir;
     [Range(0, .5f)] [SerializeField] private float m_MovementSmoothinginAir = .05f;
     [SerializeField] private float resistAir = 0.95f;
     [SerializeField] private float variableJumHeightMultiplier = 0.5f;
+    [SerializeField] private float jumpTime;
+    [SerializeField] private int amountOfJumps = 1;
 
-    //Animacoes
+
+    private bool isGrounded; //verifica se o player esta no chao
+    private float jumpTimeCounter;
+    private bool isJumping;
+    private bool startJump;
+    private bool canJump;
+    
+    private int amountOfJumpsLeft;
+    
+
+    //Animations
     private Animator animator;
     private bool isWalking;
     
-    //Deslizar na parede
-    private bool isTouchingWall; //verifica se esta tocando a parede
+    //WallSlide
+    
     [SerializeField] private float wallCheckDistance;
     [SerializeField] private Transform wallCheck;
-    private bool isWallSliding;
-    private float wallSlidingSpeed;
     [SerializeField] private float totalWallSlidingSpeed;
     [SerializeField] private float increaseWallSliperry;
 
+    private bool isTouchingWall; //verifica se esta tocando a parede
+    private bool isWallSliding;
+    private float wallSlidingSpeed;
+    
     //wall jump
     [SerializeField] private Vector2 wallHopDirection;
     [SerializeField] private Vector2 wallJumpDirection;
-
     [SerializeField] private float wallHopForce;
     [SerializeField] private float wallJumpForce;
+
     private int facingDirection = 1; //-1 left | 1 right
 
-    //morte
-    private bool isDead;
+    //killPlayer
     [SerializeField] private float lethalVelocity;
+
+    
+
+    private bool isDead;
     private bool isTouchingEnemy;
 
+    //oneWayPlatform
+    private bool isOnOneWayPlatform;
+    private GameObject currentOnWayPlatform;
+    
 
 
     // Start is called before the first frame update
@@ -69,6 +86,8 @@ public class PlayerController : MonoBehaviour
         instance = this;
         controller = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        playerBoxCollider = GetComponent<BoxCollider2D>();
+        playerCircleCollider = GetComponent<CircleCollider2D>();
         amountOfJumpsLeft = amountOfJumps;
         wallSlidingSpeed = totalWallSlidingSpeed;
         wallHopDirection.Normalize();
@@ -76,18 +95,21 @@ public class PlayerController : MonoBehaviour
 
     }
 
+
+
     // Update is called once per frame
     void Update()
     {
+        checkIfIsDead();
         checkInput();
         checkMovementDirection();
         updateAnimations();
         checkSurroundings();
         checkIfCanJump();
         checkIfwallIsSliding();
-        checkIfIsDead();
     }
 
+    //
     private void checkSurroundings(){
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
         isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right,wallCheckDistance,whatIsGround);
@@ -99,15 +121,17 @@ public class PlayerController : MonoBehaviour
     }
 
     public void updateAnimations(){
+        animator.SetBool("isDead",isDead);
         animator.SetBool("isWalking",isWalking);
         animator.SetBool("isJumping",isJumping);
         animator.SetBool("isWallSliding",isWallSliding);
-        //animator.SetBool("isDead",isDead);
+        
     }
 
     private void checkInput(){
         // atribiu o lado que o jogador deseja andar de acordo com a tecla apertada -1|0|1
         moveInput = Input.GetAxisRaw("Horizontal");
+
 
         // verifica se o personagem esta no chao e pode pular
         if(Input.GetKeyDown(KeyCode.Space))
@@ -119,6 +143,12 @@ public class PlayerController : MonoBehaviour
         {
             controller.velocity = new Vector2(controller.velocity.x, controller.velocity.y * variableJumHeightMultiplier);
             isJumping = false;    
+        }
+
+        if(Input.GetKeyDown(KeyCode.S)||Input.GetKeyDown(KeyCode.DownArrow)){
+            if(currentOnWayPlatform != null){
+                StartCoroutine(fallOfOneWayPlatform());
+            }
         }
 
     }
@@ -146,12 +176,16 @@ public class PlayerController : MonoBehaviour
     }
 
     private void applyMovement(){
+        if(moveInput !=0){
+            isWalking = true;
+        }
+
         if(isGrounded){
             // Move the character by finding the target velocity
             Vector3 targetVelocity = new Vector2(moveInput * speedMovement, controller.velocity.y);
             // And then smoothing it out and applying it to the character
             controller.velocity = Vector3.SmoothDamp(controller.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
-            isWalking = true;
+            
         } else if(!isGrounded && !isWallSliding && moveInput != 0){
             Vector2 forceToAdd = new Vector2(movementForceInAir * moveInput, 0);
             controller.AddForce(forceToAdd);
@@ -163,11 +197,11 @@ public class PlayerController : MonoBehaviour
                 controller.velocity  = Vector3.SmoothDamp(controller.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothinginAir);
             }
 
-            isWalking = true;
+            
 
         } else if(!isGrounded && !isWallSliding && moveInput==0){
             controller.velocity = new Vector2(controller.velocity.x*resistAir,controller.velocity.y);
-            isWalking = true;
+            
         }
         
 
@@ -227,8 +261,10 @@ public class PlayerController : MonoBehaviour
 
     public void checkIfIsDead(){
         if(isGrounded && (controller.velocity.y < -lethalVelocity)){
+            isDead = true;
             killPlayer();
         }else if(isTouchingEnemy){
+            isDead = true;
             killPlayer();
         }else{
             isDead=false;
@@ -239,6 +275,7 @@ public class PlayerController : MonoBehaviour
         isDead = true;
         Destroy(gameObject);
         LevelManager.instance.Respawn();
+        isDead = false;
     }
 
     
@@ -248,6 +285,25 @@ public class PlayerController : MonoBehaviour
         }else{
             isTouchingEnemy = false;
         }
+
+        if(collision.gameObject.CompareTag("OneWayPlatformer")){
+            currentOnWayPlatform = collision.gameObject;
+        }
     }
 
+    private void OnCollisionExit2D(Collision2D collision) {
+        if(collision.gameObject.CompareTag("OneWayPlatformer")){
+            currentOnWayPlatform = null;
+        }
+    }
+
+    private IEnumerator fallOfOneWayPlatform(){
+        float waitingTime = 0.5f;
+        PlatformEffector2D plataformEfector = currentOnWayPlatform.GetComponent<PlatformEffector2D>();
+        
+            plataformEfector.rotationalOffset = 180f;
+            yield return new WaitForSeconds(waitingTime);
+            plataformEfector.rotationalOffset = 0f;
+
+    }
 }
