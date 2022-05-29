@@ -10,6 +10,8 @@ public class PlayerController : MonoBehaviour
     private BoxCollider2D playerBoxCollider;
     private CircleCollider2D playerCircleCollider;
 
+
+
     //movement
     [Range(0, .5f)] [SerializeField] private float m_MovementSmoothing = .05f; // How much to smooth out the movement
     [SerializeField] private float speedMovement;
@@ -69,7 +71,8 @@ public class PlayerController : MonoBehaviour
 
     //killPlayer
     [SerializeField] private float lethalVelocity;
-
+    [SerializeField] private float deathAnimation = 2f;
+    [SerializeField] private CinemachineVirtualCameraBase CameraBase;
     
 
     private bool isDead;
@@ -98,6 +101,11 @@ public class PlayerController : MonoBehaviour
         wallJumpDirection.Normalize();
         gameIsPaused = false;
 
+    }
+
+    void Start()
+    {
+        transform.position = LevelManager.instance.lastCheckpointPosition;
     }
 
 
@@ -134,37 +142,40 @@ public class PlayerController : MonoBehaviour
     }
 
     private void checkInput(){
-        // atribiu o lado que o jogador deseja andar de acordo com a tecla apertada -1|0|1
-        moveInput = Input.GetAxisRaw("Horizontal");
-        if(moveInput !=0){
-            isWalking = true;
-        }
-
-
-        // verifica se o personagem esta no chao e pode pular
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            if(canJump){
-                jump();
+        if(!isDead){
+            // atribiu o lado que o jogador deseja andar de acordo com a tecla apertada -1|0|1
+            moveInput = Input.GetAxisRaw("Horizontal");
+            if(moveInput !=0){
+                isWalking = true;
             }
 
-        }
-        //Se soltar a tecla o personagem comeca a cair
-        if(Input.GetKeyUp(KeyCode.Space) && isJumping)
-        {
-            controller.velocity = new Vector2(controller.velocity.x, controller.velocity.y * variableJumHeightMultiplier);
-            isJumping = false;    
-        }
 
-        if(Input.GetKeyDown(KeyCode.S)||Input.GetKeyDown(KeyCode.DownArrow)){
-            if(currentOnWayPlatform != null){
-                StartCoroutine(fallOfOneWayPlatform());
+            // verifica se o personagem esta no chao e pode pular
+            if(Input.GetKeyDown(KeyCode.Space))
+            {
+                if(canJump){
+                    jump();
+                }
+
+            }
+            //Se soltar a tecla o personagem comeca a cair
+            if(Input.GetKeyUp(KeyCode.Space) && isJumping)
+            {
+                controller.velocity = new Vector2(controller.velocity.x, controller.velocity.y * variableJumHeightMultiplier);
+                isJumping = false;    
+            }
+
+            if(Input.GetKeyDown(KeyCode.S)||Input.GetKeyDown(KeyCode.DownArrow)){
+                if(currentOnWayPlatform != null){
+                    StartCoroutine(fallOfOneWayPlatform());
+                }
+            }
+
+            if(Input.GetKeyDown(KeyCode.Escape)){
+                pauseGame();
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.Escape)){
-            pauseGame();
-        }
 
     }
 
@@ -220,7 +231,8 @@ public class PlayerController : MonoBehaviour
         if(isWallSliding){
             if(controller.velocity.y < -wallSlidingSpeed){
                 controller.velocity = new Vector2(controller.velocity.x,-wallSlidingSpeed);
-            }else if(wallSlidingSpeed<=limitWallslidingSpeed){
+            }
+            if(wallSlidingSpeed<=limitWallslidingSpeed){
                 wallSlidingSpeed = wallSlidingSpeed+increaseWallSliperry; // atualiza a velocidade que o personagem cai
             }
             
@@ -253,15 +265,17 @@ public class PlayerController : MonoBehaviour
     public void jump()
     {
         if(canJump && !isWallSliding){
+            //SoundManagerScript.instance.PlaySound("jump");
             isJumping = true;
             jumpTimeCounter = jumpTime;
             controller.velocity = new Vector2(controller.velocity.x,jumpForce);
             amountOfJumpsLeft--;
         }else if((isWallSliding || isTouchingWall) && (moveInput != facingDirection) && canJump){
+            //SoundManagerScript.instance.PlaySound("jump");
             isJumping = true;
             isWallSliding = false;
             amountOfJumpsLeft--;
-            Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*-facingDirection,wallJumpForce*wallJumpDirection.y);
+            Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*-facingDirection,wallSlidingSpeed);
             controller.AddForce(forceToAdd, ForceMode2D.Impulse);
         }/*else if(isWallSliding && moveInput == 0 && canJump){ //wall Hop
             isJumping = true;
@@ -274,22 +288,35 @@ public class PlayerController : MonoBehaviour
     }
 
     public void checkIfIsDead(){
-        if((isGrounded && (controller.velocity.y < -lethalVelocity) || controller.velocity.y < (-lethalVelocity - 10f))){
+        if((isGrounded && (controller.velocity.y < -lethalVelocity)) || controller.velocity.y < (-lethalVelocity - 10f)){
             isDead = true;
-            killPlayer();
+            animator.SetBool("isDead",isDead);
+            
+            StartCoroutine(killPlayer());
         }else if(isTouchingEnemy){
             isDead = true;
-            killPlayer();
+            StartCoroutine(killPlayer());
         }else{
-            isDead=false;
+            isDead = false;
         }
     }
 
-    public void killPlayer(){
-        isDead = true;
+    public IEnumerator killPlayer(){
+
+        //SoundManagerScript.instance.PlaySound("death");
+        CameraBase.Follow = null;
+        playerBoxCollider.enabled = false;
+        playerCircleCollider.enabled = false;
+        controller.velocity = new Vector2(0,-0.5f);
+        controller.isKinematic = true;
+
+        yield return new WaitForSeconds(deathAnimation);
+
+        isDead = false;
         Destroy(gameObject);
         LevelManager.instance.respawn();
-        isDead = false;
+
+        
     }
 
     
@@ -303,6 +330,21 @@ public class PlayerController : MonoBehaviour
         if(collision.gameObject.CompareTag("OneWayPlatformer")){
             currentOnWayPlatform = collision.gameObject;
         }
+
+        if(collision.gameObject.CompareTag("NextLevel")){
+            LevelManager.instance.NextLevel();
+        }
+
+
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision) {
+
+        if(collision.gameObject.CompareTag("NextLevel")){
+            LevelManager.instance.NextLevel();
+        }
+
+
     }
 
     private void OnCollisionExit2D(Collision2D collision) {
