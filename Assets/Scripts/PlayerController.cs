@@ -258,9 +258,15 @@ public class PlayerController : MonoBehaviour
             isJumping = true;
             isWallSliding = false;
             amountOfJumpsLeft--;
-            Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*moveInput,wallJumpForce*wallJumpDirection.y);
+            Vector2 forceToAdd = new Vector2(wallJumpForce*wallJumpDirection.x*-facingDirection,wallJumpForce*wallJumpDirection.y);
             controller.AddForce(forceToAdd, ForceMode2D.Impulse);
-        }
+        }/*else if(isWallSliding && moveInput == 0 && canJump){ //wall Hop
+            isJumping = true;
+            isWallSliding = false;
+            amountOfJumpsLeft--;
+            Vector2 forceToAdd = new Vector2(wallHopForce*wallHopDirection.x*-facingDirection,wallHopForce*wallHopDirection.y);
+            controller.AddForce(forceToAdd, ForceMode2D.Impulse);
+        }*/
 
     }
 

@@ -2,10 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Audio;
 
 public class MainMenu : MonoBehaviour
 {
     [SerializeField] private GameObject optionsMenuUI;
+    [SerializeField] private GameObject mainMenuUI;
+    [SerializeField] private GameObject creditsMenuUI;
 
     public void playGame(){
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -18,10 +21,27 @@ public class MainMenu : MonoBehaviour
 
     public void optionsMenu(){
         optionsMenuUI.SetActive(true);
+        mainMenuUI.SetActive(false);
+    }
+
+    public void creditsMenu(){
+        creditsMenuUI.SetActive(true);
+        mainMenuUI.SetActive(false);
     }
 
 
-    public void back(){
+    public void backFromOptions(){
         optionsMenuUI.SetActive(false);
+        mainMenuUI.SetActive(true);
+    }
+
+    public void backFromCredits(){
+        creditsMenuUI.SetActive(false);
+        mainMenuUI.SetActive(true);
+    }
+
+    public void setVolume(float volume){
+        Debug.Log(volume);
+        
     }
 }
