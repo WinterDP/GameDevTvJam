@@ -77,6 +77,9 @@ public class PlayerController : MonoBehaviour
     //oneWayPlatform
     private bool isOnOneWayPlatform;
     private GameObject currentOnWayPlatform;
+
+    //pause game
+    private bool gameIsPaused;
     
 
 
@@ -92,6 +95,7 @@ public class PlayerController : MonoBehaviour
         wallSlidingSpeed = totalWallSlidingSpeed;
         wallHopDirection.Normalize();
         wallJumpDirection.Normalize();
+        gameIsPaused = false;
 
     }
 
@@ -131,15 +135,21 @@ public class PlayerController : MonoBehaviour
     private void checkInput(){
         // atribiu o lado que o jogador deseja andar de acordo com a tecla apertada -1|0|1
         moveInput = Input.GetAxisRaw("Horizontal");
+        if(moveInput !=0){
+            isWalking = true;
+        }
 
 
         // verifica se o personagem esta no chao e pode pular
         if(Input.GetKeyDown(KeyCode.Space))
         {
-            jump();
+            if(canJump){
+                jump();
+            }
+
         }
         //Se soltar a tecla o personagem comeca a cair
-        if(Input.GetKeyUp(KeyCode.Space))
+        if(Input.GetKeyUp(KeyCode.Space) && isJumping)
         {
             controller.velocity = new Vector2(controller.velocity.x, controller.velocity.y * variableJumHeightMultiplier);
             isJumping = false;    
@@ -149,6 +159,10 @@ public class PlayerController : MonoBehaviour
             if(currentOnWayPlatform != null){
                 StartCoroutine(fallOfOneWayPlatform());
             }
+        }
+
+        if(Input.GetKeyDown(KeyCode.Escape)){
+            pauseGame();
         }
 
     }
@@ -176,9 +190,6 @@ public class PlayerController : MonoBehaviour
     }
 
     private void applyMovement(){
-        if(moveInput !=0){
-            isWalking = true;
-        }
 
         if(isGrounded){
             // Move the character by finding the target velocity
@@ -243,12 +254,6 @@ public class PlayerController : MonoBehaviour
             jumpTimeCounter = jumpTime;
             controller.velocity = new Vector2(controller.velocity.x,jumpForce);
             amountOfJumpsLeft--;
-        }else if(isWallSliding && moveInput == 0 && canJump){ //wall Hop
-            isJumping = true;
-            isWallSliding = false;
-            amountOfJumpsLeft--;
-            Vector2 forceToAdd = new Vector2(wallHopForce*wallHopDirection.x*-facingDirection,wallHopForce*wallHopDirection.y);
-            controller.AddForce(forceToAdd, ForceMode2D.Impulse);
         }else if((isWallSliding || isTouchingWall) && (moveInput != facingDirection) && canJump){
             isJumping = true;
             isWallSliding = false;
@@ -274,7 +279,7 @@ public class PlayerController : MonoBehaviour
     public void killPlayer(){
         isDead = true;
         Destroy(gameObject);
-        LevelManager.instance.Respawn();
+        LevelManager.instance.respawn();
         isDead = false;
     }
 
@@ -305,5 +310,15 @@ public class PlayerController : MonoBehaviour
             yield return new WaitForSeconds(waitingTime);
             plataformEfector.rotationalOffset = 0f;
 
+    }
+
+    private void pauseGame(){
+        if(gameIsPaused){
+            gameIsPaused = false;
+            LevelManager.instance.resume();
+        }else{
+            gameIsPaused = true;            
+            LevelManager.instance.pause();
+        }
     }
 }
