@@ -9,6 +9,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private GameObject optionsMenuUI;
     [SerializeField] private GameObject mainMenuUI;
     [SerializeField] private GameObject creditsMenuUI;
+    [SerializeField] private AudioMixer audioMixer;
 
     public void playGame(){
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -42,6 +43,6 @@ public class MainMenu : MonoBehaviour
 
     public void setVolume(float volume){
         Debug.Log(volume);
-        
+        audioMixer.SetFloat("volume",volume);
     }
 }
