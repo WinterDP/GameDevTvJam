@@ -15,6 +15,9 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private CinemachineVirtualCameraBase CameraBase;
 
+    //Checkpoint
+    public Vector2 lastCheckpointPosition;
+
     //audio
     [SerializeField] private AudioMixer audioMixer;
 
@@ -25,14 +28,18 @@ public class LevelManager : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        instance = this;
+        if(instance == null){
+            instance = this;
+            DontDestroyOnLoad(instance);
+        }else{
+            Destroy(gameObject);
+        }
+        
     }
 
 
     public void respawn(){
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        //GameObject player = Instantiate(playerPrefab, respawnPoint.position, Quaternion.identity);
-        //CameraBase.Follow = player.transform;
     }
 
     public void pause(){
@@ -58,6 +65,11 @@ public class LevelManager : MonoBehaviour
     public void setVolume(float volume){
         Debug.Log(volume);
         audioMixer.SetFloat("volume",volume);
+    }
+
+    public void NextLevel(){
+        Debug.Log("próximo nivel");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
     }
 
 }
