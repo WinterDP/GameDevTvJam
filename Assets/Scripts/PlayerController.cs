@@ -53,6 +53,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform wallCheck;
     [SerializeField] private float totalWallSlidingSpeed;
     [SerializeField] private float increaseWallSliperry;
+    [SerializeField]  private float limitWallslidingSpeed = 25f;
 
     private bool isTouchingWall; //verifica se esta tocando a parede
     private bool isWallSliding;
@@ -219,8 +220,10 @@ public class PlayerController : MonoBehaviour
         if(isWallSliding){
             if(controller.velocity.y < -wallSlidingSpeed){
                 controller.velocity = new Vector2(controller.velocity.x,-wallSlidingSpeed);
+            }else if(wallSlidingSpeed<=limitWallslidingSpeed){
+                wallSlidingSpeed = wallSlidingSpeed+increaseWallSliperry; // atualiza a velocidade que o personagem cai
             }
-            wallSlidingSpeed = wallSlidingSpeed+increaseWallSliperry; // atualiza a velocidade que o personagem cai
+            
 
         }
         
@@ -271,7 +274,7 @@ public class PlayerController : MonoBehaviour
     }
 
     public void checkIfIsDead(){
-        if(isGrounded && (controller.velocity.y < -lethalVelocity)){
+        if((isGrounded && (controller.velocity.y < -lethalVelocity) || controller.velocity.y < (-lethalVelocity - 10f))){
             isDead = true;
             killPlayer();
         }else if(isTouchingEnemy){
