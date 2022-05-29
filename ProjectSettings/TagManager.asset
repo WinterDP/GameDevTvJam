@@ -41,12 +41,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
-  - name: Default
-    uniqueID: 0
+  - name: Background
+    uniqueID: 2575703263
     locked: 0
   - name: Plataforma
     uniqueID: 4052543993
     locked: 0
-  - name: Background
-    uniqueID: 2575703263
+  - name: Default
+    uniqueID: 0
     locked: 0
