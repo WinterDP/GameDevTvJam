@@ -4107,7 +4107,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1192683260}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -8.009375, z: 0}
+  m_LocalPosition: {x: 0, y: -8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19919,6 +19919,7 @@ MonoBehaviour:
   respawnPoint: {fileID: 0}
   playerPrefab: {fileID: 8538994864896512290, guid: 2e6c38385fca89345927d3261a6e6fd2, type: 3}
   CameraBase: {fileID: 0}
+  audioMixer: {fileID: 0}
   pauseMenuUI: {fileID: 0}
 --- !u!4 &1670090762
 Transform:
