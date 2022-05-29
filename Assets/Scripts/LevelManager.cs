@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Audio;
 
 public class LevelManager : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private Transform respawnPoint;
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private CinemachineVirtualCameraBase CameraBase;
+
+    //audio
+    [SerializeField] private AudioMixer audioMixer;
+
 
 
     //pause n resume
@@ -48,6 +53,11 @@ public class LevelManager : MonoBehaviour
     public void quitGame(){
         Debug.Log("Saiu");
         Application.Quit();
+    }
+
+    public void setVolume(float volume){
+        Debug.Log(volume);
+        audioMixer.SetFloat("volume",volume);
     }
 
 }
