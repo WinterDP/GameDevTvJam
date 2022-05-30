@@ -69,7 +69,9 @@ public class LevelManager : MonoBehaviour
 
     public void NextLevel(){
         Debug.Log("próximo nivel");
+        Destroy(gameObject);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
 }
