@@ -10,7 +10,7 @@ public class EnemyPatroll : MonoBehaviour
     [SerializeField] private LayerMask whatIsGround; //Guarda o que é considerado chão na cena
     [SerializeField] private Transform groundCheck; //aponta onde tem chao para o objeto
 
-    private bool isFacingRight = true;
+    private bool isFacingLeft = true;
     private bool isWalking = true;
     private Animator animator;
 
@@ -32,7 +32,7 @@ public class EnemyPatroll : MonoBehaviour
 
     void FixedUpdate() {
         if(hit.collider != false){
-            if(isFacingRight){
+            if(isFacingLeft){
                 controller.velocity = new Vector2(speedMovement, controller.velocity.y);
             }else{
                 controller.velocity = new Vector2(-speedMovement, controller.velocity.y);
@@ -51,7 +51,7 @@ public class EnemyPatroll : MonoBehaviour
     }
 
     private void flip(){
-            isFacingRight = !isFacingRight;
+            isFacingLeft = !isFacingLeft;
             transform.Rotate(0.0f,180.0f,0.0f);
     }
 }
