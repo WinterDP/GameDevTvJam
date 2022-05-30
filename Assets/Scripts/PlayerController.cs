@@ -126,6 +126,7 @@ public class PlayerController : MonoBehaviour
     private void checkSurroundings(){
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
         isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right,wallCheckDistance,whatIsGround);
+        
     }
 
 
@@ -193,6 +194,7 @@ public class PlayerController : MonoBehaviour
 
     private void checkIfwallIsSliding(){
         if(isTouchingWall && !isGrounded && controller.velocity.y<0){
+            Debug.Log("aaaa");
             isWallSliding = true;
         }else{
             isWallSliding = false;
@@ -230,9 +232,11 @@ public class PlayerController : MonoBehaviour
 
         if(isWallSliding){
             if(controller.velocity.y < -wallSlidingSpeed){
+                
                 controller.velocity = new Vector2(controller.velocity.x,-wallSlidingSpeed);
             }
             if(wallSlidingSpeed<=limitWallslidingSpeed){
+                
                 wallSlidingSpeed = wallSlidingSpeed+increaseWallSliperry; // atualiza a velocidade que o personagem cai
             }
             
@@ -265,13 +269,13 @@ public class PlayerController : MonoBehaviour
     public void jump()
     {
         if(canJump && !isWallSliding){
-            //SoundManagerScript.instance.PlaySound("jump");
+            SoundManagerScript.instance.PlaySound("jump");
             isJumping = true;
             jumpTimeCounter = jumpTime;
             controller.velocity = new Vector2(controller.velocity.x,jumpForce);
             amountOfJumpsLeft--;
         }else if((isWallSliding || isTouchingWall) && (moveInput != facingDirection) && canJump){
-            //SoundManagerScript.instance.PlaySound("jump");
+            SoundManagerScript.instance.PlaySound("jump");
             isJumping = true;
             isWallSliding = false;
             amountOfJumpsLeft--;
@@ -303,7 +307,7 @@ public class PlayerController : MonoBehaviour
 
     public IEnumerator killPlayer(){
 
-        //SoundManagerScript.instance.PlaySound("death");
+        SoundManagerScript.instance.PlaySound("death");
         CameraBase.Follow = null;
         playerBoxCollider.enabled = false;
         playerCircleCollider.enabled = false;
