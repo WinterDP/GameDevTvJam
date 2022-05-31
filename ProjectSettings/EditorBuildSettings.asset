@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level Limbo (WinterBranch).unity
     guid: 9d6c12f4aaac947478898917dc56797d
+  - enabled: 1
+    path: Assets/Scenes/winScene.unity
+    guid: 618d1bdcc707b1546950056bffe2670f
   m_configObjects: {}
