@@ -307,6 +307,7 @@ public class PlayerController : MonoBehaviour
 
     public IEnumerator killPlayer(){
 
+        isDead = true;
         SoundManagerScript.instance.PlaySound("death");
         CameraBase.Follow = null;
         playerBoxCollider.enabled = false;
