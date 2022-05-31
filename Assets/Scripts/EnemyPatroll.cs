@@ -9,12 +9,14 @@ public class EnemyPatroll : MonoBehaviour
     [SerializeField] private float speedMovement;//velocidade de movimento do inimigo
     [SerializeField] private LayerMask whatIsGround; //Guarda o que é considerado chão na cena
     [SerializeField] private Transform groundCheck; //aponta onde tem chao para o objeto
+    [SerializeField] private Transform wallCheck; //aponta onde tem chao para o objeto
 
     private bool isFacingLeft = true;
     private bool isWalking = true;
     private Animator animator;
 
-    private RaycastHit2D hit; //da a informação de onde o objeto esta batendo
+    private RaycastHit2D hitEmpty;
+    private RaycastHit2D hitWall; //da a informação de onde o objeto esta batendo
     // Start is called before the first frame update
     void Start()
     {
@@ -27,11 +29,12 @@ public class EnemyPatroll : MonoBehaviour
     void Update()
     {
         checkIfIsGrounded();
+        checkIfIsInWall();
         updateAnimations();
     }
 
     void FixedUpdate() {
-        if(hit.collider != false){
+        if(hitEmpty.collider != false){
             if(isFacingLeft){
                 controller.velocity = new Vector2(speedMovement, controller.velocity.y);
             }else{
@@ -40,6 +43,11 @@ public class EnemyPatroll : MonoBehaviour
         }else{
             flip();
         }
+
+        if(hitWall.collider == true){
+            flip();
+        }
+        
     }
     private void updateAnimations(){
         animator.SetBool("isWalking",isWalking);
@@ -47,7 +55,12 @@ public class EnemyPatroll : MonoBehaviour
 
     private void checkIfIsGrounded(){
         float raycastRadius = 1f;
-        hit = Physics2D.Raycast(groundCheck.position, -transform.up, raycastRadius, whatIsGround);
+        hitEmpty = Physics2D.Raycast(groundCheck.position, -transform.up, raycastRadius, whatIsGround);
+    }
+
+    private void checkIfIsInWall(){
+        float raycastRadius = .1f;
+        hitWall = Physics2D.Raycast(wallCheck.position, -transform.up, raycastRadius, whatIsGround);
     }
 
     private void flip(){

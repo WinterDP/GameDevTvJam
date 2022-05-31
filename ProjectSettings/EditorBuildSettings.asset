@@ -8,7 +8,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 8caaebf0ad0b7894ca78416c7fdab492
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Level Limbo.unity
     guid: fdda868dc0eb05b4e98bcd42fd86870a
+  - enabled: 1
+    path: Assets/Scenes/Level Limbo (WinterBranch).unity
+    guid: 9d6c12f4aaac947478898917dc56797d
   m_configObjects: {}
