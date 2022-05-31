@@ -9,6 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 8caaebf0ad0b7894ca78416c7fdab492
   - enabled: 1
-    path: Assets/Level 01 - Limbo/Cenas/Level Limbo.unity
+    path: Assets/Scenes/Level Limbo.unity
     guid: fdda868dc0eb05b4e98bcd42fd86870a
   m_configObjects: {}
